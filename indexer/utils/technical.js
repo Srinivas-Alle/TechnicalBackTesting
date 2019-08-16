@@ -21,6 +21,7 @@ const get20EMA = async (ticks) => {
   const emaValues = await getEMA(ticks, 3);
 
   let { length } = ticks;
+  console.log(length);
   while (emaValues.length !== 0) {
     const ema = emaValues.pop();
     length -= 1;
