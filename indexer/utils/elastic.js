@@ -82,17 +82,17 @@ const createIndex = async (index) => {
 
 const pushToIndex = async (esIndex, stocks) => {
   const body = [];
-  
+
   stocks.forEach((doc) => {
     body.push({ index: { _index: esIndex } });
     body.push(doc);
   });
-  //console.log(body);
+  // console.log(body);
   return new BluebirdPromise((resolve, reject) => {
     client.bulk({ refresh: true, body }, (err, res) => {
       if (err) return reject(err);
 
-     console.log('time taken to index: ', res.took);
+      console.log('time taken to index: ', res.took);
       return resolve();
     });
   });
@@ -100,7 +100,7 @@ const pushToIndex = async (esIndex, stocks) => {
 
 const indexData = async (index, ticks) => {
   const isIndexExist = await indiceExist(index);
-  //console.log(ticks.length,index);
+  // console.log(ticks.length,index);
   if (!isIndexExist) {
     await createIndex(index);
   }

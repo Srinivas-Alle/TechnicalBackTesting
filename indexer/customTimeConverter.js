@@ -69,10 +69,10 @@ const getQuotes = async (quote, timeFrames) => {
       body,
     });
     oneMinticks = oneMinticks.concat(response.hits.hits);
-   // console.log(oneMinticks.length, count);
+    // console.log(oneMinticks.length, count);
     time = oneMinticks[oneMinticks.length - 1]._source.time;
   }
- // console.log(oneMinticks.length, count);
+  // console.log(oneMinticks.length, count);
 
   let indexName;
   let timeInMins;

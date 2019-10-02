@@ -22,7 +22,7 @@ const isTimeMatched = (date, timeInMins) => {
   if (timeInMins === 30) return date.getMinutes() % timeInMins === 15;
   if (timeInMins === 60) return date.getMinutes() % timeInMins === 15;
 
-  
+
   return false;
 };
 const getTimeSubstraction = (date, timeInMins) => {
