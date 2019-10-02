@@ -40,6 +40,9 @@ const createIndex = async (index) => {
           close: {
             type: 'float',
           },
+          time: {
+            type: 'date',
+          },
 
           volume: {
             type: 'integer',
@@ -79,16 +82,17 @@ const createIndex = async (index) => {
 
 const pushToIndex = async (esIndex, stocks) => {
   const body = [];
+  
   stocks.forEach((doc) => {
     body.push({ index: { _index: esIndex } });
     body.push(doc);
   });
-  console.log(body);
+  //console.log(body);
   return new BluebirdPromise((resolve, reject) => {
     client.bulk({ refresh: true, body }, (err, res) => {
       if (err) return reject(err);
 
-      console.log('time taken to index: ', res.items[0]);
+     console.log('time taken to index: ', res.took);
       return resolve();
     });
   });
@@ -96,13 +100,36 @@ const pushToIndex = async (esIndex, stocks) => {
 
 const indexData = async (index, ticks) => {
   const isIndexExist = await indiceExist(index);
+  //console.log(ticks.length,index);
   if (!isIndexExist) {
     await createIndex(index);
   }
   await pushToIndex(index, ticks);
-  console.log('index done ');
+};
+
+const getUniqueQuotesName = async () => {
+  const query = {
+    size: '0',
+    aggs: {
+      uniq_name: {
+        terms: { field: 'name', size: 1000 },
+      },
+    },
+  };
+  const response = await client.search({
+    index: 'ticks_1min',
+    body: query,
+
+  });
+  let stocks = response.aggregations.uniq_name.buckets;
+  stocks = stocks.map((stock) => stock.key);
+  stocks = stocks.filter((name) => name.indexOf('_') === -1);
+  return stocks;
 };
 // indexData('ticks_2min',ticks)
 module.exports = {
   indexData,
+  getUniqueQuotesName,
 };
+
+getUniqueQuotesName();

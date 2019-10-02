@@ -21,13 +21,13 @@ const get20EMA = async (ticks) => {
   const emaValues = await getEMA(ticks, 3);
 
   let { length } = ticks;
-  console.log(length);
+  //console.log(length);
   while (emaValues.length !== 0) {
     const ema = emaValues.pop();
     length -= 1;
     ticks[length].ema20 = Number(ema.toFixed(2));
   }
-  console.log(ticks);
+//  console.log(ticks);
   return ticks;
 };
 const get50EMA = async (ticks) => {
@@ -98,7 +98,7 @@ const applyAverageTrueRange = async (ticks) => {
     ticks[length].averageTrueRange = Number(attr.toFixed(2));
   }
 
-  console.log(ticks);
+ // console.log(ticks);
   return ticks;
 };
 
