@@ -101,6 +101,20 @@ const applyAverageTrueRange = async (ticks) => {
   // console.log(ticks);
   return ticks;
 };
+const getBollingerBands = (quotes, period, stddev) => {
+  const close = quotes.map((quote) => quote.close);
+
+  return new BluebirdPromise((resolve, reject) => {
+    tulind.indicators.bbands.indicator([close], [period, stddev], (err, result) => {
+      if (err) reject(err);
+      resolve({
+        lower: result[0],
+        middle: result[1],
+        upper: result[2],
+      });
+    });
+  });
+};
 
 module.exports = {
   get20EMA,
@@ -109,4 +123,5 @@ module.exports = {
   get150EMA,
   get200EMA,
   applyAverageTrueRange,
+  getBollingerBands,
 };
