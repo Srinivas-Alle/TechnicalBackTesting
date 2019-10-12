@@ -5,8 +5,9 @@
 const elasticsearch = require('elasticsearch');
 const elasticUtil = require('./../utils/elastic');
 const candleStick = require('./../utils/candleStick');
-const conversionUtil = require('./../utils/conversionUtil');
 const technicals = require('./../utils/technical');
+const orderBuilder = require('../tradings/orderBuilder');
+const orderTrader = require('../tradings/orderTrader');
 
 const client = new elasticsearch.Client({
   host: 'localhost:9200',
@@ -46,6 +47,7 @@ const getSearchQuery = (name, time) => ({
 });
 const uniqueQuotes = async () => {
   const quotes = await elasticUtil.getUniqueQuotesName();
+  return quotes;
 };
 const isHamner = (tick) => candleStick.isHammer(tick);
 const isInvertedHammer = (tick) => candleStick.isInvertedHammer(tick);
@@ -67,6 +69,7 @@ const candleCrossBollinger = async (ticks) => {
   return latestTick.low <= lower[lower.length - 1];
 };
 
+
 const getQuotesOfStock = async (quote) => {
   const time = '2017-12-31T09:15:00+05:30';
   const body = getSearchQuery(quote, time);
@@ -75,31 +78,36 @@ const getQuotesOfStock = async (quote) => {
     body,
   });
   const ticks = response.hits.hits;
-  for (let i = 0; i < ticks.length; i++) {
+  for (let i = ticks.length - 1; i >= 0; i -= 1) {
     const tick = ticks[i]._source;
-    if (isHamner(tick)) {
+    if (isHamner(tick) || isInvertedHammer(tick)) {
       const slicedLength = i + 1;
       const sliced = ticks.slice(0, slicedLength).map((slicedTick) => slicedTick._source);
-
       const match = await matchStrategy(sliced);
-      // console.log('candle hammer..', tick.time);
+      // console.log('hammer on ', tick.time);
       if (match) {
-        console.log('candle crossed bollinger..', tick.time);
-      }
-    }
-    if (isInvertedHammer(tick)) {
-      // console.log('inveted hammer at ', tick.time);
-      const slicedLength = i + 1;
-      const sliced = ticks.slice(0, slicedLength).map((slicedTick) => slicedTick._source);
+        const order = orderBuilder.buildOrders([tick]);
+        if (orderTrader.isTradeExists(tick, order[0], [ticks[i + 1], ticks[i + 2]])) {
+          const profitFromTrade = orderTrader.trade(tick, ticks.slice((i + 1)), order[0]);
+          console.log(`${tick.time}: ${isHamner(tick) ? 'hammer' : 'inverted'}:${profitFromTrade}`);
+        }
 
-      const match = await matchStrategy(sliced);
-      // console.log('candle hammer..', tick.time);
-      if (match) {
-        console.log(' inveted ... candle crossed bollinger..', tick.time);
+        // if (isHamner(tick)) console.log('hammer..', tick.time);
+        // else console.log('inverted..', tick.time);
+        // console.log(profitFromTrade);
       }
     }
   }
-  console.log(response.hits.hits.length);
+  console.log('profit for Quote', quote, orderTrader.getTotalProfit());
+  // console.log(response.hits.hits.length);
 };
 
-getQuotesOfStock('ACC');
+const backTestForAllStocks = async () => {
+  const quotes = await uniqueQuotes();
+  quotes.forEach((quote) => {
+    getQuotesOfStock(quote);
+  });
+};
+// backTestForAllStocks();
+
+getQuotesOfStock('INFY');

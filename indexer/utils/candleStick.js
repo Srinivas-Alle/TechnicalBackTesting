@@ -33,6 +33,10 @@ function isBearish(candlestick) {
 }
 
 function isHammerLike(candlestick) {
+  // const {
+  //   high, low, open, close,
+  // } = candlestick;
+  // return (high - low) > (6 * (close - open));
   return tailLen(candlestick) > (bodyLen(candlestick) * 2)
              && wickLen(candlestick) < bodyLen(candlestick);
 }
@@ -191,3 +195,20 @@ module.exports.isBullish = isBullish;
 // module.exports.bullishKicker = bullishKicker;
 // module.exports.bearishKicker = bearishKicker;
 
+
+const tick = {
+  name: 'ACC',
+  open: 1502.15,
+  high: 1512.4,
+  low: 1480.65,
+  close: 1507.05,
+  volume: 232085,
+  time: '2019-07-09T09:15:00+05:30',
+  ema200: 1588.35,
+  ema150: 1556.34,
+  ema100: 1551.6,
+  ema50: 1561.41,
+  ema20: 1504.68,
+  averageTrueRange: 15.69,
+};
+// console.log(isHammer(tick));
