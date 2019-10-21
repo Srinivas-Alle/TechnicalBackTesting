@@ -127,9 +127,57 @@ const getUniqueQuotesName = async () => {
   return stocks;
 };
 // indexData('ticks_2min',ticks)
+
+
+const getCountQuery = (name, fromTime, toTime) => ({
+  query: {
+    bool: {
+      must: [
+        {
+          match: {
+            name,
+          },
+        },
+        {
+          range: {
+            time: {
+              gt: fromTime,
+              lt: toTime,
+            },
+          },
+        },
+      ],
+    },
+  },
+});
+const getSearchQuery = (name, fromTime, toTime) => ({
+  size: 10000,
+  from: 0,
+  sort: [
+    {
+      time: {
+        order: 'asc',
+      },
+    },
+  ],
+  ...getCountQuery(name, fromTime, toTime),
+});
+
+const getQuotesOfStock = async (quote, indexName = 'ticks_60min',
+  fromTime = '2017-12-31T09:15:00+05:30', toTime) => {
+    //console.log(fromTime,toTime);
+  const body = getSearchQuery(quote, fromTime, toTime);
+  const response = await client.search({
+    index: indexName,
+    body,
+  });
+  const ticks = response.hits.hits;
+  return ticks;
+};
+
 module.exports = {
   indexData,
   getUniqueQuotesName,
+  getQuotesOfStock,
 };
-
-getUniqueQuotesName();
+// getUniqueQuotesName();
