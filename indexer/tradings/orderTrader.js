@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 const candleStick = require('./../utils/candleStick');
 const orderBuilder = require('./../tradings/orderBuilder');
+
 const riskRewardRation = 2;
 let totalProfit = 0;
 
