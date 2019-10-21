@@ -49,7 +49,10 @@ const getMaxStopLoss = (quantity, entry, stopLoss) => {
   const lossPerTrade = Math.abs(quantity * (entry - stopLoss));
   if (lossPerTrade < maxLossPerTrade) return stopLoss;
 
-  if (entry < stopLoss) entry = stopLoss; // short selling
+  if (entry < stopLoss) {
+    const num = Math.abs(entry + maxLossPerTrade / quantity);
+    return num;
+  } // short selling
   const num = Math.abs(entry - maxLossPerTrade / quantity);
   return Math.round(num * 10) / 10;
 };
