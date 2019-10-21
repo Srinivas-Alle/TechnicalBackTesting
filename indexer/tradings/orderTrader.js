@@ -7,7 +7,8 @@ const riskRewardRation = 2;
 let totalProfit = 0;
 
 const isTradeExists = (tick, order, nextTwoTicks) => {
-  if (new Date(tick.time).getHours() === 15 && new Date(tick.time).getMinutes() === 15) return false;
+  if (new Date(tick.time).getHours() === 15
+  && new Date(tick.time).getMinutes() === 15) return false;
   nextTwoTicks = nextTwoTicks.map((tickWithSource) => tickWithSource._source);
   if (candleStick.isBullish(tick)) {
     if (order.price <= nextTwoTicks[0].high) return true;
@@ -51,7 +52,6 @@ const trade = (tick, ticks, order) => {
   // totalProfit += tradeProfit;
   return `${(tradeProfit)}+${order.price},${order.stoploss},${target}`;
 };
-
 
 
 const tradeTSL = (tick, ticks, order) => {

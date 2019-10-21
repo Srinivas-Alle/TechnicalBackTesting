@@ -60,14 +60,15 @@ const matchStrategy = async (ticks) => {
 
 const isBollingerSqueezed = (upper, lower, price) => {
   const bollingerRange = upper - lower;
-  //console.log(upper, lower, bollingerRange);
+  // console.log(upper, lower, bollingerRange);
   return bollingerRange < price * (1 / 100);
 };
 const candleCrossBollinger = async (ticks) => {
   const bollinger = await technicals.getBollingerBands(ticks, 20, 2);
   const latestTick = ticks[ticks.length - 1];
   const { lower, upper } = bollinger;
-  if (isBollingerSqueezed(upper[upper.length - 1], lower[lower.length - 1], latestTick.open)) return false;
+  if (isBollingerSqueezed(upper[upper.length - 1],
+    lower[lower.length - 1], latestTick.open)) return false;
 
   if (candleStick.isInvertedHammer(latestTick)) {
     return latestTick.high >= upper[upper.length - 1];
@@ -109,6 +110,7 @@ const getQuotesOfStock = async (quote) => {
   // console.log(response.hits.hits.length);
 };
 
+// eslint-disable-next-line no-unused-vars
 const backTestForAllStocks = async () => {
   const quotes = await uniqueQuotes();
   quotes.forEach((quote) => {
