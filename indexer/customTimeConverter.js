@@ -34,6 +34,27 @@ const getCountQuery = (name, time) => ({
     },
   },
 });
+const getMaxQuery = (name) => ({
+
+  _source: false,
+  aggs: {
+    max_price: { max: { field: 'time' } },
+  },
+  query: {
+    bool: {
+      must:
+          {
+            match: {
+              name,
+            },
+
+          },
+
+    },
+  },
+
+
+});
 const getSearchQuery = (name, time) => ({
   size: 10000,
   from: 0,
@@ -110,10 +131,30 @@ const applyEMAs = async (ticks) => {
 
 const convertQuotes = async () => {
   const quotes = await elasticUtil.getUniqueQuotesName();
-  // console.log(quotes);
+  console.log(quotes);
   for (let i = 0; i < quotes.length; i++) {
+    if (i < 106) continue;
     console.log(`${i} of ${quotes.length}, ${quotes[i]}`);
-    await getQuotes({ name: quotes[i], time: '2017-12-31T09:08:00+05:30' }, ['5min', '30min', '60min']);
+    try {
+      await getQuotes({ name: quotes[i], time: '2019-10-02T00:01:00+05:30' }, ['5min', '30min', '60min']);
+    } catch (err) {
+      console.error(err);
+    }
+    // getQuotes({ name: 'ACC', time: '2019-09-29T09:08:00+05:30' }, '10min');
+    // getQuotes({ name: 'ACC', time: '2019-09-29T09:08:00+05:30' }, '15min');
+    // await getQuotes({ name: quotes[i], time: '2017-12-31T09:08:00+05:30' }, '30min');
+    // await getQuotes({ name: quotes[i], time: '2017-12-31T09:08:00+05:30' }, '60min');
+  }
+};
+const getMaxTimeofQuote = async () => {
+  const quotes = await elasticUtil.getUniqueQuotesName();
+  console.log(quotes); for (let i = 0; i < quotes.length; i++) {
+    // if(i<105) continue;
+    // console.log(`${i} of ${quotes.length}, ${quotes[i]}`);
+    const dateValue = await elasticUtil.getMaxTimeOfQuote(getMaxQuery(quotes[i]));
+    if (dateValue !== '2020-04-30T09:55:00.000Z') { console.log(`${i} of ${quotes.length}, ${quotes[i]}- ,${dateValue}`); }
+
+    // await getQuotes({ name: quotes[i], time: '2019-10-02T00:01:00+05:30' }, ['5min', '30min', '60min']);
     // getQuotes({ name: 'ACC', time: '2019-09-29T09:08:00+05:30' }, '10min');
     // getQuotes({ name: 'ACC', time: '2019-09-29T09:08:00+05:30' }, '15min');
     // await getQuotes({ name: quotes[i], time: '2017-12-31T09:08:00+05:30' }, '30min');
@@ -121,4 +162,5 @@ const convertQuotes = async () => {
   }
 };
 
-//convertQuotes();
+
+convertQuotes();

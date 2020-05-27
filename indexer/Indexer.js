@@ -58,7 +58,7 @@ async function pushEachFile(file, filesArr) {
   }
 }
 function readFilesAndPushToElastic() {
-  const files = recursive('../data/ticks/OCT/');
+  const files = recursive('../data/ticks/2020/');
   const file1 = files.pop();
   console.log(file1);
 

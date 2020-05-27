@@ -126,6 +126,7 @@ const getUniqueQuotesName = async () => {
   stocks = stocks.filter((name) => name.indexOf('_') === -1);
   return stocks;
 };
+
 // indexData('ticks_2min',ticks)
 
 
@@ -165,7 +166,6 @@ const getSearchQuery = (name, fromTime, toTime) => ({
 
 const getQuotesOfStock = async (quote, indexName = 'ticks_60min',
   fromTime = '2017-12-31T09:15:00+05:30', toTime) => {
-    //console.log(fromTime,toTime);
   const body = getSearchQuery(quote, fromTime, toTime);
   const response = await client.search({
     index: indexName,
@@ -175,9 +175,30 @@ const getQuotesOfStock = async (quote, indexName = 'ticks_60min',
   return ticks;
 };
 
+const getAllQuotesFromRange = async (indexName, startDate, endDate) => {
+  const quotes = await getUniqueQuotesName();
+  startDate = new Date(startDate);
+  endDate = new Date(endDate);
+  const allTicksOfMonth = [];
+  for (let i = 0; i < quotes.length; i += 1) {
+    const quote = quotes[4];
+    // eslint-disable-next-line no-await-in-loop
+    let ticks = await getQuotesOfStock(quote,
+      indexName,
+      startDate.toISOString(),
+      endDate.toISOString());
+
+    // eslint-disable-next-line no-underscore-dangle
+    ticks = ticks.map((tick) => tick._source);
+    allTicksOfMonth.push(ticks);
+    break;
+  }
+  return allTicksOfMonth;
+};
 module.exports = {
   indexData,
   getUniqueQuotesName,
   getQuotesOfStock,
+  getAllQuotesFromRange,
 };
 // getUniqueQuotesName();
