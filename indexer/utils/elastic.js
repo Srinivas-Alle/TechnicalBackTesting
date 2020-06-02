@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 const elasticsearch = require('elasticsearch');
 const BluebirdPromise = require('bluebird');
 
@@ -195,10 +196,25 @@ const getAllQuotesFromRange = async (indexName, startDate, endDate) => {
   }
   return allTicksOfMonth;
 };
+
+const search = (query, indexName) => new Promise((resolve, reject) => {
+  console.log(JSON.stringify(query));
+  client.search({
+    index: indexName,
+    body: query,
+  }, (err, response) => {
+    if (err) {
+      console.log(err);
+      reject(err);
+    }
+    resolve(response.hits.hits);
+  });
+});
 module.exports = {
   indexData,
   getUniqueQuotesName,
   getQuotesOfStock,
   getAllQuotesFromRange,
+  search,
 };
 // getUniqueQuotesName();

@@ -14,8 +14,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Launch Indexer.js",
+      "program": "${workspaceFolder}/indexer/Indexer.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch zerodhaOhlc",
+      "program": "${workspaceFolder}/indexer/data_engine/zerodhaOHLCGetter.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Launch Program",
-      "program": "${workspaceFolder}\\strategies\\bullish-marubozu.js"
+      "program": "${workspaceFolder}/indexer/strategies/openLow5Min.js"
     }
   ]
 }

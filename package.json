@@ -9,10 +9,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.19.2",
     "bluebird": "^3.5.5",
+    "csvjson": "^5.1.0",
     "elasticsearch": "^15.0.0",
     "event-stream": "^3.3.4",
     "is-zip-file": "^1.0.2",
+    "jshint": "^2.11.1",
     "line-reader": "^0.4.0",
     "line-reader-sync": "^0.1.0",
     "lodash": "^4.17.15",
@@ -26,8 +29,8 @@
     "tulind": "^0.8.18"
   },
   "devDependencies": {
-    "eslint": "^6.1.0",
-    "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2"
   }
 }

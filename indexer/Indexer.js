@@ -1,8 +1,12 @@
-const LineReaderSync = require('line-reader-sync');
-const moment = require('moment');
-const recursive = require('recursive-readdir-sync');
+
 const elasticsearch = require('elasticsearch');
 const BluebirdPromise = require('bluebird');
+const fs = require('fs');
+const technicals = require('./utils/technical');
+
+
+const niftyQuotes = JSON.parse(fs.readFileSync('/Users/srinivasalle/Desktop/workspace/za/TechnicalBackTesting/indexer/data_engine/NSE_FUTURES_listed_EQ.json', 'utf8'));
+const allQuotesWithTicks = niftyQuotes.map((quote) => `${quote.name}_${quote.instrument_token}`);
 
 const client = new elasticsearch.Client({
   host: 'localhost:9200',
@@ -11,6 +15,7 @@ const client = new elasticsearch.Client({
 
 const index = (stocks, esIndex) => {
   const body = [];
+  if (stocks.length === 0) return Promise.resolve();
   stocks.forEach((doc) => {
     body.push({ index: { _index: esIndex } });
     body.push(doc);
@@ -20,51 +25,95 @@ const index = (stocks, esIndex) => {
     client.bulk({ body }, (err, res) => {
       if (err) return reject(err);
       console.log('time taken to index: ', res.took);
-      console.log(stocks);
+      // console.log(stocks);
       return resolve();
     });
   });
 };
 
-async function pushEachFile(file, filesArr) {
-  console.log('processing file----', file);
-  const stocks = [];
-  const lrs = new LineReaderSync(file);
-  const lines = lrs.toLines();
-  if (file.endsWith('.txt')) {
-    lines.forEach((line) => {
-      const info = line.split(',');
-      // console.log(info, nifty50.indexOf(info[0]));
 
-      const ohlc = {
-        name: info[0],
-        time: moment(`${info[1]} ${info[2]}`, 'YYYYMMDD hh:mm').format(),
-        open: parseFloat(info[3]),
-        high: parseFloat(info[4]),
-        low: parseFloat(info[5]),
-        close: parseFloat(info[6]),
-        volume: parseFloat(info[7]),
-      };
-      stocks.push(ohlc);
-    });
-    // console.log(stocks);
-    await index(stocks, 'ticks_1min', 'default');
-  }
+const years = [2016, 2017, 2018, 2019, 2020];
 
-  console.log(filesArr.length);
-  if (filesArr.length !== 0) {
-    const file1 = filesArr.pop();
-    pushEachFile(file1, filesArr);
+const applyEMAs = async (ticks) => {
+  await technicals.get200EMA(ticks);
+  await technicals.get150EMA(ticks);
+  await technicals.get100EMA(ticks);
+  await technicals.get50EMA(ticks);
+  await technicals.get20EMA(ticks);
+  await technicals.applyRSI(ticks, 14);
+  await technicals.applyAverageTrueRange(ticks);
+  return ticks;
+};
+
+// eslint-disable-next-line no-unused-vars
+async function indexTicksOf(timeFrame) {
+  for (let quoteIndex = 0; quoteIndex < allQuotesWithTicks.length; quoteIndex += 1) {
+    const quote = allQuotesWithTicks[quoteIndex];
+    let stockTicks = [];
+    let oldTicks = [];
+    for (let yearIndex = 0; yearIndex < years.length; yearIndex += 1) {
+      const filePath = `/Users/srinivasalle/Desktop/workspace/za/TechnicalBackTesting/indexer/data_engine/zerodha_data/${timeFrame}/${years[yearIndex]}/${quote}.json`;
+      const ticks = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      stockTicks = (ticks);
+      if (yearIndex !== 0) {
+        const sliced = oldTicks.slice(oldTicks.length - 200);
+        stockTicks = sliced.concat(stockTicks);
+      }
+      stockTicks = stockTicks.map((tick) => ({
+        name: quote.split('_')[0],
+        instrument_token: quote.split('_')[1],
+        time: tick[0],
+        open: tick[1],
+        high: tick[2],
+        low: tick[3],
+        close: tick[4],
+        volume: tick[5],
+      }));
+      // eslint-disable-next-line no-await-in-loop
+      stockTicks = await applyEMAs(stockTicks);
+
+      if (yearIndex !== 0) {
+        stockTicks = stockTicks.slice(200);
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await index(stockTicks, `ticks_${timeFrame}`, 'default');
+      console.log('Log output: indexTicksOf -> stockTicks', stockTicks.length, quote, years[yearIndex]);
+      oldTicks = ticks;
+      // console.log(stockTicks);
+    }
   }
 }
-function readFilesAndPushToElastic() {
-  const files = recursive('../data/ticks/2020/');
-  const file1 = files.pop();
-  console.log(file1);
+
+// eslint-disable-next-line no-unused-vars
+async function indexTicksOfForDay(timeFrame) {
+  for (let quoteIndex = 0; quoteIndex < allQuotesWithTicks.length; quoteIndex += 1) {
+    const quote = allQuotesWithTicks[quoteIndex];
+    let stockTicks = [];
+    for (let yearIndex = 0; yearIndex < years.length; yearIndex += 1) {
+      const filePath = `/Users/srinivasalle/Desktop/workspace/za/TechnicalBackTesting/indexer/data_engine/zerodha_data/${timeFrame}/${years[yearIndex]}/${quote}.json`;
+      const ticks = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      stockTicks = stockTicks.concat(ticks);
+    }
+
+    stockTicks = stockTicks.map((tick) => ({
+      name: quote.split('_')[0],
+      instrument_token: quote.split('_')[1],
+      time: tick[0],
+      open: tick[1],
+      high: tick[2],
+      low: tick[3],
+      close: tick[4],
+      volume: tick[5],
+    }));
+    // eslint-disable-next-line no-await-in-loop
+    stockTicks = await applyEMAs(stockTicks);
 
 
-  pushEachFile(file1, files);
+    // eslint-disable-next-line no-await-in-loop
+    await index(stockTicks, `ticks_${timeFrame}`, 'default');
+    console.log('Log output: indexTicksOf -> stockTicks', stockTicks.length, quote);
+  }
 }
 
-
-readFilesAndPushToElastic();
+// indexTicksOfForDay('day');
+// indexTicksOf('5minute');
