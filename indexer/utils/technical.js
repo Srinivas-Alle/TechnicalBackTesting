@@ -23,7 +23,7 @@ const getRSI = (ticks, day) => {
 const getEMA = (ticks, day) => {
   const close = ticks.map((tick) => tick.close);
   return new BluebirdPromise((resolve, reject) => {
-    tulind.indicators.sma.indicator([close], [day], (err, results) => {
+    tulind.indicators.ema.indicator([close], [day], (err, results) => {
       if (err) return reject(err);
       return resolve(results[0]);
     });
@@ -31,9 +31,11 @@ const getEMA = (ticks, day) => {
 };
 
 const get20EMA = async (ticks) => {
-  const emaValues = await getEMA(ticks, 20);
+  let emaValues = await getEMA(ticks, 20);
 
+  emaValues = emaValues.slice(19);
   let { length } = ticks;
+
   // console.log(length);
   while (emaValues.length !== 0) {
     const ema = emaValues.pop();
@@ -44,7 +46,8 @@ const get20EMA = async (ticks) => {
   return ticks;
 };
 const get50EMA = async (ticks) => {
-  const emaValues = await getEMA(ticks, 50);
+  let emaValues = await getEMA(ticks, 50);
+  emaValues = emaValues.slice(49);
   let { length } = ticks;
   while (emaValues.length !== 0) {
     const ema = emaValues.pop();
@@ -55,7 +58,8 @@ const get50EMA = async (ticks) => {
 };
 
 const get100EMA = async (ticks) => {
-  const emaValues = await getEMA(ticks, 100);
+  let emaValues = await getEMA(ticks, 100);
+  emaValues = emaValues.slice(99);
 
   let { length } = ticks;
   while (emaValues.length !== 0) {
@@ -66,7 +70,8 @@ const get100EMA = async (ticks) => {
   return ticks;
 };
 const get150EMA = async (ticks) => {
-  const emaValues = await getEMA(ticks, 150);
+  let emaValues = await getEMA(ticks, 150);
+  emaValues = emaValues.slice(149);
 
   let { length } = ticks;
   while (emaValues.length !== 0) {
@@ -78,8 +83,8 @@ const get150EMA = async (ticks) => {
   return ticks;
 };
 const get200EMA = async (ticks) => {
-  const emaValues = await getEMA(ticks, 200);
-
+  let emaValues = await getEMA(ticks, 200);
+  emaValues = emaValues.slice(199);
   let { length } = ticks;
   while (emaValues.length !== 0) {
     const ema = emaValues.pop();
@@ -139,7 +144,18 @@ const applyRSI = async (ticks, period) => {
     length -= 1;
     ticks[length][`RSI${period}`] = Number(ema.toFixed(2));
   }
- // console.log(ticks);
+  // console.log(ticks);
+  return ticks;
+};
+
+const applyEMAs = async (ticks) => {
+  await get200EMA(ticks);
+  await get150EMA(ticks);
+  await get100EMA(ticks);
+  await get50EMA(ticks);
+  await get20EMA(ticks);
+  await applyRSI(ticks, 14);
+  await applyAverageTrueRange(ticks);
   return ticks;
 };
 
@@ -153,6 +169,7 @@ module.exports = {
   applyAverageTrueRange,
   getBollingerBands,
   applyRSI,
+  applyEMAs,
 };
 // const stocks = [
 //   {
@@ -559,4 +576,4 @@ module.exports = {
 //   }];
 
 
-//console.log(applyRSI(stocks,14));
+// console.log(applyRSI(stocks,14));

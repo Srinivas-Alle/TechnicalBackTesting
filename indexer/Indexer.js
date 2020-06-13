@@ -1,52 +1,18 @@
 
-const elasticsearch = require('elasticsearch');
-const BluebirdPromise = require('bluebird');
 const fs = require('fs');
 const technicals = require('./utils/technical');
+const elasticUtil = require('./utils/elastic');
 
 
 const niftyQuotes = JSON.parse(fs.readFileSync('/Users/srinivasalle/Desktop/workspace/za/TechnicalBackTesting/indexer/data_engine/NSE_FUTURES_listed_EQ.json', 'utf8'));
 const allQuotesWithTicks = niftyQuotes.map((quote) => `${quote.name}_${quote.instrument_token}`);
 
-const client = new elasticsearch.Client({
-  host: 'localhost:9200',
-  apiVersion: '5.5',
-});
-
-const index = (stocks, esIndex) => {
-  const body = [];
-  if (stocks.length === 0) return Promise.resolve();
-  stocks.forEach((doc) => {
-    body.push({ index: { _index: esIndex } });
-    body.push(doc);
-  });
-
-  return new BluebirdPromise((resolve, reject) => {
-    client.bulk({ body }, (err, res) => {
-      if (err) return reject(err);
-      console.log('time taken to index: ', res.took);
-      // console.log(stocks);
-      return resolve();
-    });
-  });
-};
-
 
 const years = [2016, 2017, 2018, 2019, 2020];
 
-const applyEMAs = async (ticks) => {
-  await technicals.get200EMA(ticks);
-  await technicals.get150EMA(ticks);
-  await technicals.get100EMA(ticks);
-  await technicals.get50EMA(ticks);
-  await technicals.get20EMA(ticks);
-  await technicals.applyRSI(ticks, 14);
-  await technicals.applyAverageTrueRange(ticks);
-  return ticks;
-};
 
 // eslint-disable-next-line no-unused-vars
-async function indexTicksOf(timeFrame) {
+async function indexTicksInSmallerTime(timeFrame) {
   for (let quoteIndex = 0; quoteIndex < allQuotesWithTicks.length; quoteIndex += 1) {
     const quote = allQuotesWithTicks[quoteIndex];
     let stockTicks = [];
@@ -70,14 +36,14 @@ async function indexTicksOf(timeFrame) {
         volume: tick[5],
       }));
       // eslint-disable-next-line no-await-in-loop
-      stockTicks = await applyEMAs(stockTicks);
+      stockTicks = await technicals.applyEMAs(stockTicks);
 
       if (yearIndex !== 0) {
         stockTicks = stockTicks.slice(200);
       }
       // eslint-disable-next-line no-await-in-loop
-      await index(stockTicks, `ticks_${timeFrame}`, 'default');
-      console.log('Log output: indexTicksOf -> stockTicks', stockTicks.length, quote, years[yearIndex]);
+      await elasticUtil.index(stockTicks, `ticks_${timeFrame}`, 'default');
+      console.log('Log output: indexTicksOf -> stockTicks', stockTicks.length, quote, years[yearIndex], timeFrame);
       oldTicks = ticks;
       // console.log(stockTicks);
     }
@@ -85,7 +51,12 @@ async function indexTicksOf(timeFrame) {
 }
 
 // eslint-disable-next-line no-unused-vars
-async function indexTicksOfForDay(timeFrame) {
+
+async function indexTicks(timeFrame) {
+  if (timeFrame !== 'day' && timeFrame !== 'week') {
+    await indexTicksInSmallerTime(timeFrame);
+    return;
+  }
   for (let quoteIndex = 0; quoteIndex < allQuotesWithTicks.length; quoteIndex += 1) {
     const quote = allQuotesWithTicks[quoteIndex];
     let stockTicks = [];
@@ -106,14 +77,15 @@ async function indexTicksOfForDay(timeFrame) {
       volume: tick[5],
     }));
     // eslint-disable-next-line no-await-in-loop
-    stockTicks = await applyEMAs(stockTicks);
+    stockTicks = await technicals.applyEMAs(stockTicks);
 
 
     // eslint-disable-next-line no-await-in-loop
-    await index(stockTicks, `ticks_${timeFrame}`, 'default');
-    console.log('Log output: indexTicksOf -> stockTicks', stockTicks.length, quote);
+    await elasticUtil.index(stockTicks, `ticks_${timeFrame}`, 'default');
+
+    console.log('Log output: indexTicksOf -> stockTicks', stockTicks.length, quote, timeFrame);
   }
 }
 
-// indexTicksOfForDay('day');
-// indexTicksOf('5minute');
+
+indexTicks('10minute');

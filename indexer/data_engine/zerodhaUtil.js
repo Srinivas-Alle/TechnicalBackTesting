@@ -2,7 +2,7 @@
 const axios = require('axios');
 const moment = require('moment');
 
-const encToken = 'Ed+SpMsheqXiuNvp9pxmqTOBgSWq3bMSQZH0i17n7Q5OOarx8MAIiTd0TziYmI2f4+xReNgy8T5IVFlcegGfSYTRZ7sBpg==';
+const encToken = 'G3fTQ/wPLbkiIj6bVjlGsgKTBSyti8WJUsUnn/Z7RMX0ssSsprzfNXvQMHtP/MziVUTjAuhii8d7aGTkECkOgoP159H+Qg==';
 
 function fetchData(instrumentToken, timeFrame, startTime, endTime) {
   return new Promise((resolve, reject) => {
@@ -19,12 +19,10 @@ function fetchData(instrumentToken, timeFrame, startTime, endTime) {
   });
 }
 
-
-const requestBySplittingTime = (tickName,
-  insToken,
-  timeFrame,
-  startTime,
-  endTime) => new Promise((resolve) => {
+const getFetchPromises = (insToken, timeFrame, startTime, endTime) => {
+  if (timeFrame === 'week') {
+    return [fetchData(insToken, timeFrame, startTime, endTime)];
+  }
   const promises = [];
   let endDate = startTime;
   // eslint-disable-next-line no-constant-condition
@@ -38,7 +36,16 @@ const requestBySplittingTime = (tickName,
     promises.push(fetchData(insToken, timeFrame, startTime, endDate));
     endDate = moment(endDate).add(1, 'd');
   }
+  return promises;
+};
 
+const requestBySplittingTime = (tickName,
+  insToken,
+  timeFrame,
+  startTime,
+  endTime) => new Promise((resolve) => {
+
+  const promises = getFetchPromises(insToken, timeFrame, startTime, endTime);
   Promise.all(promises).then((results) => {
     let candles = [];
     results.forEach((result) => {
@@ -48,6 +55,7 @@ const requestBySplittingTime = (tickName,
     resolve(candles);
   });
 });
+
 module.exports = {
   fetchData,
   requestBySplittingTime,

@@ -24,12 +24,24 @@ const getQueryToGet5minTicks = (from, to) => ({
             source: `
             int hours = doc['time'].value.getHour();
             int mins = doc['time'].value.getMinute();   
+
+            double open = doc['open'].value;
+            double close = doc['close'].value;
+            double high = doc['high'].value;
+            double low = doc['low'].value;
+            double ema20 = doc['ema20'].value;
+            double rsi = doc['RSI14'].value;
+            double pc1 = open/100;
+
+
+
             if(hours !=3 || mins !=45)return false;
+           
             if(doc['open']==doc['low']){
-              return true;
+              return open > ema20;
             }
             if(doc['open']==doc['high']){
-              return true;
+              return  open < ema20 ;
             }
             return false;
             `,
@@ -136,8 +148,14 @@ const candleOf5minutesOfDay = (tick) => ({
 });
 
 const isBullish = (tick) => tick.close > tick.open;
-const isUptrendIn30Mins = (tick) => tick.close > tick.ema20 && tick.ema20 > tick.ema50;
-const idDownTrendIn30Mins = (tick) => tick.close < tick.ema20 && tick.ema20 < tick.ema50;
+
+const isUptrendIn30Mins = (tick) => tick.close > tick.ema20
+                                    && tick.ema20 > tick.ema50
+                                    && tick.RSI14 > 60;
+
+const idDownTrendIn30Mins = (tick) => tick.close < tick.ema20
+                                      && tick.ema20 < tick.ema50
+                                      && tick.RSI14 <40;
 
 function is30minCriteriaMatched(pcTick, min30Tick) {
   if (isBullish(pcTick)) {
@@ -191,16 +209,6 @@ const isTickClosedPositiveForTheDay = async (_5minsTicks) => {
   const allTrades = [];
   for (let index = 0; index < _5minsTicks.length; index+=1) {
     const tick = _5minsTicks[index];
-    const result = await elasticUtil.search(getQueryToGetDayTick(tick), 'ticks_day');
-    let dayTick;
-
-    try {
-      dayTick = result[0]._source;
-    } catch (err) {
-      console.error('failed to get dayTick for ', tick);
-      // eslint-disable-next-line no-continue
-      continue;
-    }
     const target = getTarget(tick);
     const sl = getStopLoss(tick);
 
@@ -217,13 +225,11 @@ const isTickClosedPositiveForTheDay = async (_5minsTicks) => {
     if (tick.name === 'OIL AND NATURAL GAS CORP.') {
       console.log('deubber');
     }
-    if (await hasGot2R(dayTick, tick, target, sl)) {
+    if (await hasGot2R(tick, target, sl)) {
       counter+=1;
       trade.profit = 2;
     } else {
-      trade.profit = (trade.type === 'B'? ((dayTick.low - tick.close)/tick.close)*100
-        :((tick.close - dayTick.high)/tick.close)*100);
-      if (trade.profit<-1) trade.profit = -1;
+      trade.profit = '-22';
     }
     allTrades.push(trade);
   }
@@ -256,16 +262,10 @@ const hasSLMet = (sl, tick, isBullishTrade) => {
   return tick.high >=sl;
 };
 
-const hasGot2R = (dayTick, _5minTick, target, sl) =>
-// eslint-disable-next-line implicit-arrow-linebreak
-// eslint-disable-next-line no-async-promise-executor
-  new Promise(async (resolve) => {
-    if (_5minTick.name === 'MARUTI SUZUKI INDIA.') {
-      console.log('deugg');
-    }
-
-    const isBullishTrade = isBullish(_5minTick);
-    let results = await elasticUtil.search(candleOf5minutesOfDay(_5minTick), 'ticks_5minute');
+const hasGot2R = (_5minTick, target, sl) => new Promise((resolve) => {
+  const isBullishTrade = isBullish(_5minTick);
+  elasticUtil.search(candleOf5minutesOfDay(_5minTick), 'ticks_5minute').then((results) => {
+    // eslint-disable-next-line no-param-reassign
     results = results.map((tick) => tick._source);
     for (let index = 1; index < results.length; index+=1) {
       const tick = results[index];
@@ -278,9 +278,9 @@ const hasGot2R = (dayTick, _5minTick, target, sl) =>
         return;
       }
     }
-
     resolve(false);
   });
+});
 
 
 get5MinTradableTicks('2020-06-01', '2020-06-08');

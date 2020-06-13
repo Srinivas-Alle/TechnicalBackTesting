@@ -2,6 +2,7 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-param-reassign */
 const fs = require('fs');
+const moment = require('moment');
 const zerodhaUtil = require('./zerodhaUtil');
 
 const direcotryPath = '/Users/srinivasalle/Desktop/workspace/za/TechnicalBackTesting/indexer/data_engine/zerodha_data';
@@ -24,14 +25,35 @@ function writeTofile(startTime, timeFrame, tickName, candles) {
   }
   const name = `${tickName}_${set[tickName]}`;
   fs.writeFileSync(`${dir}/${name}.json`, JSON.stringify(candles));
-  console.log('written to path ', name, timeFrame);
+  console.log('written to path ', name, timeFrame, year);
 }
+
+const writeWeeklyCandles = (startTime, timeFrame, tickName, candles, endTime) => {
+  let yearCanedles = [];
+  while ((moment(startTime).isBefore(endTime))) {
+    const nextYearDate = moment(startTime).add(1, 'y');
+
+    // eslint-disable-next-line no-loop-func
+    yearCanedles = candles.filter((candle) => {
+      if (moment(startTime).isSame(candle[0])) return true;
+      if (moment(nextYearDate).isSame(candle[0])) return true;
+
+      return moment(candle[0]).isBefore(nextYearDate) && moment(candle[0]).isAfter(startTime);
+    });
+    writeTofile(startTime, timeFrame, tickName, yearCanedles);
+    startTime = nextYearDate;
+  }
+};
 
 
 const requestOHLCOf = (tickName, instrumentToken, timeFrame, startTime, endTime) => new Promise((resolve) => {
   zerodhaUtil.requestBySplittingTime(tickName, instrumentToken, timeFrame, startTime, endTime).then((candles) => {
     try {
-      writeTofile(startTime, timeFrame, tickName, candles);
+      if (timeFrame === 'week') {
+        writeWeeklyCandles(startTime, timeFrame, tickName, candles, endTime);
+      } else {
+        writeTofile(startTime, timeFrame, tickName, candles);
+      }
       resolve();
     } catch (err) {
       console.log(err);
@@ -53,11 +75,16 @@ async function getQuotesOfPeriod(timeFrame, startTime, endTime) {
     // eslint-disable-next-line no-await-in-loop
     await requestOHLCOf(quote.name, quote.instrument_token, timeFrame, startTime, endTime);
     console.log(`done for ${quote.name}`);
-    break;
   }
 }
 // getQuotesOfPeriod('day', '2019-01-01', '2019-12-31');
-getQuotesOfPeriod('60minute', '2019-01-01', '2019-12-31');
+// getQuotesOfPeriod('10minute', '2016-01-01', '2016-12-31');
+// getQuotesOfPeriod('10minute', '2017-01-01', '2017-12-31');
+// getQuotesOfPeriod('10minute', '2018-01-01', '2018-12-31');
+// getQuotesOfPeriod('10minute', '2019-01-01', '2019-12-31');
+// getQuotesOfPeriod('10minute', '2020-01-01', '2020-06-08');
+
+// getQuotesOfPeriod('week', '2020-01-01', '2020-05-29');
 // getQuotesOfPeriod('5minute', '2020-01-01', '2020-06-08');
 // getQuotesOfPeriod('30minute', '2020-01-01', '2020-05-29');
 // getQuotesOfPeriod('5minute', '2017-01-01', '2017-12-31');
