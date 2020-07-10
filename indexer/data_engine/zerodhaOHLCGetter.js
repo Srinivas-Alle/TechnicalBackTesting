@@ -84,7 +84,7 @@ async function getQuotesOfPeriod(timeFrame, startTime, endTime) {
 // getQuotesOfPeriod('10minute', '2019-01-01', '2019-12-31');
 // getQuotesOfPeriod('10minute', '2020-01-01', '2020-06-08');
 
-// getQuotesOfPeriod('week', '2020-01-01', '2020-05-29');
+// getQuotesOfPeriod('week', '2020-01-01', '2020-07-06');
 // getQuotesOfPeriod('5minute', '2020-01-01', '2020-06-08');
 // getQuotesOfPeriod('30minute', '2020-01-01', '2020-05-29');
 // getQuotesOfPeriod('5minute', '2017-01-01', '2017-12-31');

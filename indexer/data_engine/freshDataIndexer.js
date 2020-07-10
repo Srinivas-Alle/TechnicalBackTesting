@@ -118,7 +118,13 @@ async function indexAllTicksOfPeriod(timeFrame, tillDate) {
     const { name, instrument_token } = quote;
     const reslutls = await elasticUtil.search(getQueryOfLastEntry(name), `ticks_${timeFrame}`);
     const { time } = reslutls[0]._source;
-    const startTime = moment(time).add(1, 'd').format('YYYY-MM-DD');
+    let startTime;
+    if (timeFrame === 'week') {
+      startTime = moment(time).add(1, 'd').format('YYYY-MM-DD');
+    } else {
+      startTime = moment(time).add(6, 'd').format('YYYY-MM-DD');
+    }
+
 
     if (moment(startTime).isAfter(moment.endTime)) throw new Error('invalid start & end times');
 
@@ -134,4 +140,4 @@ const updateDataOfTimeFrame = async (timeFrame) => {
   await indexAllTicksOfPeriod(timeFrame, toDate);
 };
 
-updateDataOfTimeFrame('day');
+// updateDataOfTimeFrame('week');

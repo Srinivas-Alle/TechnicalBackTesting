@@ -1,6 +1,7 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-continue */
 /* eslint-disable no-await-in-loop */
-const elasticUtil = require('./../utils/elastic');
+const elasticUtil = require('../utils/elastic');
 
 const indexName = 'ticks_30min';
 

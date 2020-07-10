@@ -2,7 +2,7 @@
 const axios = require('axios');
 const moment = require('moment');
 
-const encToken = 'G3fTQ/wPLbkiIj6bVjlGsgKTBSyti8WJUsUnn/Z7RMX0ssSsprzfNXvQMHtP/MziVUTjAuhii8d7aGTkECkOgoP159H+Qg==';
+const encToken = 'RI42+Ihe0JiC7rRm1x7h/pGx3uNaHU5VU8SDzPZ62/jXzH4imTP03fNGaK+X3bBw7X5Z3ZHdokIyBGARV1ztrvwGQsDb+A==';
 
 function fetchData(instrumentToken, timeFrame, startTime, endTime) {
   return new Promise((resolve, reject) => {

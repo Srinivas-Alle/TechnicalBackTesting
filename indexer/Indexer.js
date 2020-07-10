@@ -87,5 +87,4 @@ async function indexTicks(timeFrame) {
   }
 }
 
-
-indexTicks('10minute');
+//  indexTicks('week');

@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable no-continue */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-await-in-loop */
@@ -18,6 +19,7 @@ const elasticUtil = require('../utils/elastic');
 
 
 const getWeeklyTicks = (tick, starTime, endTime) => ({
+  size:1000,
   query: {
     bool: {
       must: [
@@ -52,19 +54,31 @@ const getWeeklyRsiTurnedLowToSideways = async (fromDate, toDate) => {
     const futureTick = niftyQuotes[index];
     let weeklyTicks = await elasticUtil.search(getWeeklyTicks(futureTick, fromDate, toDate), 'ticks_week');
     weeklyTicks = weeklyTicks.map((result) => result._source);
+    const firstBouncedTick = getFirstBouncedTick(weeklyTicks);
+    console.log("Log output: getWeeklyRsiTurnedLowToSideways -> firstBouncedTick", firstBouncedTick)
   }
 };
 
-const toName = (weeklyTicks) => {
+const getFirstBouncedTick = (weeklyTicks) => {
+  let foundLessThan35 = false;
+  let weeklyTick;
   for (let index = 0; index < weeklyTicks.length; index += 1) {
-    const weeklyTick = weeklyTicks[index];
-    if (weeklyTick.RSI14 < 35) {
+    weeklyTick = weeklyTicks[index];
 
+    if (weeklyTick.RSI14 < 35) {
+      foundLessThan35 = true;
     }
-    continue;
+    if (foundLessThan35 && weeklyTick.RSI14 > 45) {
+      break;
+    }
   }
+  return weeklyTick;
 };
 
+const run = (params) => {
+  getWeeklyRsiTurnedLowToSideways('2016-01-01','2020-06-08');
+};
+run();
 // Get all tokens where weekly RSI 14
 // Get where RSI < 35
 //  Get wher RSI > 40 immediate next rsi
