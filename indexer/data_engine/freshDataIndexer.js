@@ -120,13 +120,13 @@ async function indexAllTicksOfPeriod(timeFrame, tillDate) {
     const { time } = reslutls[0]._source;
     let startTime;
     if (timeFrame === 'week') {
-      startTime = moment(time).add(1, 'd').format('YYYY-MM-DD');
-    } else {
       startTime = moment(time).add(6, 'd').format('YYYY-MM-DD');
+    } else {
+      startTime = moment(time).add(1, 'd').format('YYYY-MM-DD');
     }
 
 
-    if (moment(startTime).isAfter(moment.endTime)) throw new Error('invalid start & end times');
+    if (moment(startTime).isAfter(moment(tillDate))) throw new Error('invalid start & end times');
 
     const ohlcCandles = await requestOHLCOf(name, instrument_token, timeFrame, startTime, tillDate);
     const emaTicks = await applyTechnicals(ohlcCandles, name, instrument_token, startTime, timeFrame);
@@ -140,4 +140,4 @@ const updateDataOfTimeFrame = async (timeFrame) => {
   await indexAllTicksOfPeriod(timeFrame, toDate);
 };
 
-// updateDataOfTimeFrame('week');
+// updateDataOfTimeFrame('day');

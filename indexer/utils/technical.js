@@ -94,20 +94,20 @@ const get200EMA = async (ticks) => {
 
   return ticks;
 };
-const getATR = (ticks) => {
+const getATR = (ticks, period = 14) => {
   const high = ticks.map((item) => item.high);
   const low = ticks.map((item) => item.low);
   const close = ticks.map((item) => item.close);
 
   return new BluebirdPromise((resolve, reject) => {
-    tulind.indicators.atr.indicator([high, low, close], [14], (err, results) => {
+    tulind.indicators.atr.indicator([high, low, close], [period], (err, results) => {
       if (err) return reject(err);
       return resolve(results[0]);
     });
   });
 };
-const applyAverageTrueRange = async (ticks) => {
-  const attrs = await getATR(ticks);
+const applyAverageTrueRange = async (ticks, period = 14) => {
+  const attrs = await getATR(ticks, period);
 
   let { length } = ticks;
   while (attrs.length !== 0) {
