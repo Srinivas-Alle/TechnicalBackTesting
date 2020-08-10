@@ -87,4 +87,4 @@ async function indexTicks(timeFrame) {
   }
 }
 
-//  indexTicks('week');
+//  indexTicks('hour');

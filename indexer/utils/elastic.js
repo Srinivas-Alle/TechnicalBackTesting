@@ -9,7 +9,6 @@ const client = new elasticsearch.Client({
 });
 
 
-
 const index = (stocks, esIndex) => {
   const body = [];
   if (stocks.length === 0) return Promise.resolve();
@@ -28,6 +27,19 @@ const index = (stocks, esIndex) => {
   });
 };
 
+const getAggregation = (query, indexName) => new Promise((resolve, reject) => {
+  if (!indexName) throw new Error('pass Index');
+  client.search({
+    index: indexName,
+    body: query,
+  }, (err, response) => {
+    if (err) {
+      console.log(err);
+      reject(err);
+    }
+    resolve(response);
+  });
+});
 
 const search = (query, indexName) => new Promise((resolve, reject) => {
   if (!indexName) throw new Error('pass Index');
@@ -45,5 +57,6 @@ const search = (query, indexName) => new Promise((resolve, reject) => {
 module.exports = {
   search,
   index,
+  getAggregation,
 };
 // getUniqueQuotesName();

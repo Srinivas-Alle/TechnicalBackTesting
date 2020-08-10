@@ -77,7 +77,10 @@ async function getQuotesOfPeriod(timeFrame, startTime, endTime) {
     console.log(`done for ${quote.name}`);
   }
 }
-// getQuotesOfPeriod('day', '2019-01-01', '2019-12-31');
+// getQuotesOfPeriod('hour', '2017-01-01', '2017-12-31');
+// getQuotesOfPeriod('hour', '2018-01-01', '2018-12-31');
+// getQuotesOfPeriod('hour', '2019-01-01', '2019-12-31');
+// getQuotesOfPeriod('hour', '2020-01-01', '2020-07-21');
 // getQuotesOfPeriod('10minute', '2016-01-01', '2016-12-31');
 // getQuotesOfPeriod('10minute', '2017-01-01', '2017-12-31');
 // getQuotesOfPeriod('10minute', '2018-01-01', '2018-12-31');

@@ -140,4 +140,5 @@ const updateDataOfTimeFrame = async (timeFrame) => {
   await indexAllTicksOfPeriod(timeFrame, toDate);
 };
 
+// updateDataOfTimeFrame('10minute');
 // updateDataOfTimeFrame('day');

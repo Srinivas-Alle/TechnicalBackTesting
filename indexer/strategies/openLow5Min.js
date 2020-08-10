@@ -14,7 +14,7 @@
 const elasticUtil = require('../utils/elastic');
 
 
-const getQueryToGet5minTicks = (from, to) => ({
+const getQueryToGet10minTicks = (from, to) => ({
   size: 10000,
   query: {
     bool: {
@@ -41,7 +41,8 @@ const getQueryToGet5minTicks = (from, to) => ({
               return open > ema20;
             }
             if(doc['open']==doc['high']){
-              return  open < ema20 ;
+              return false;
+             
             }
             return false;
             `,
@@ -167,21 +168,24 @@ function is30minCriteriaMatched(pcTick, min30Tick) {
 
 const isPercentageMatched = (tick) => {
   // less than 1% change in a 5min?
+  return true;
   const pcChange = (Math.abs(tick.close - tick.open)/tick.open)*100;
   return pcChange<1 && pcChange>0.5;
 };
 
 
-const getTicksIn5Mins = async (from, to) => {
-  let all5minTicks = await elasticUtil.search(getQueryToGet5minTicks(from, to), 'ticks_5minute');
+const getTicksin10Mins = async (from, to) => {
+  let all10MinTicks = await elasticUtil.search(getQueryToGet10minTicks(from, to), 'ticks_10minute');
   // eslint-disable-next-line no-underscore-dangle
-  all5minTicks = all5minTicks.map((tick) => tick._source);
-  console.log('Log output: getTicksIn5Mins -> all5minTicks', all5minTicks.length);
-  return all5minTicks;
+  all10MinTicks = all10MinTicks.map((tick) => tick._source);
+  all10MinTicks = all10MinTicks.filter((tick) => (tick.high-tick.close)<((tick.close-tick.open))/2);
+  all10MinTicks = all10MinTicks.filter((tick) => (tick.close-tick.open)<((tick.open)*1)/100);
+  console.log('Log output: getTicksIn5Mins -> all5minTicks', all10MinTicks.length);
+  return all10MinTicks;
 };
 
-const get5MinTradableTicks = async (from, to) => {
-  const ticks = await getTicksIn5Mins(from, to);
+const get10MinTradableTicks = async (from, to) => {
+  const ticks = await getTicksin10Mins(from, to);
   const pcMatchedArr = ticks.filter((tick) => isPercentageMatched(tick));
   console.log('Log output: get5MinTradableTicks -> isPcMatched', pcMatchedArr.length);
   const min30MatchArr = [];
@@ -196,9 +200,9 @@ const get5MinTradableTicks = async (from, to) => {
       // eslint-disable-next-line no-continue
       continue;
     }
-    if (is30minCriteriaMatched(pcTick, min30Tick)) {
-      min30MatchArr.push(pcTick);
-    }
+    // if (is30minCriteriaMatched(pcTick, min30Tick)) {
+    min30MatchArr.push(pcTick);
+    // }
   }
   console.log('Log output: get5MinTradableTicks -> min30MatchArr', min30MatchArr.length);
   isTickClosedPositiveForTheDay(min30MatchArr);
@@ -283,7 +287,7 @@ const hasGot2R = (_5minTick, target, sl) => new Promise((resolve) => {
 });
 
 
-get5MinTradableTicks('2020-06-01', '2020-06-08');
+get10MinTradableTicks('2020-08-05', '2020-08-05');
 
 module.exports = {
 };
