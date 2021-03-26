@@ -1,60 +1,73 @@
 /* eslint-disable no-param-reassign */
-const axios = require('axios');
-const moment = require('moment');
+const axios = require("axios");
+const moment = require("moment");
 
-const encToken = '5NYYkcvzWpIHf0JOZzIra99Ak4p+KylunOZjbM8n1x/LhBcoxzodt66lewgyCEkUV9t/T5iHQ0bW+nYUbP+EqrumTd/Mcg==';
+const encToken =
+  "bCPoKDa++t7GKI4yxQpljENVaVLyS8Rt2VaQX+8hV8xuIfdVjmltjQsz7m5+lr8aj/1jBGHdESHIvqVORRXl9hfkzQx4bg==";
 
 function fetchData(instrumentToken, timeFrame, startTime, endTime) {
   return new Promise((resolve, reject) => {
-    axios.get(`https://kite.zerodha.com/oms/instruments/historical/${instrumentToken}/${timeFrame}?from=${startTime}&to=${endTime}&oi=1`, {
-      headers: {
-        Authorization: `enctoken ${encToken}`,
-      },
-    }).then((result) => {
-      resolve(result);
-    }).catch((err) => {
-      console.log('Log output: fetchData -> err', err.path, err.response.statusText);
-      reject();
-    });
+    axios
+      .get(
+        `https://kite.zerodha.com/oms/instruments/historical/${instrumentToken}/${timeFrame}?from=${startTime}&to=${endTime}&oi=1`,
+        {
+          headers: {
+            Authorization: `enctoken ${encToken}`,
+          },
+        }
+      )
+      .then((result) => {
+        resolve(result);
+      })
+      .catch((err) => {
+        console.log(
+          "Log output: fetchData -> err",
+          err.path,
+          err.response.statusText
+        );
+        reject();
+      });
   });
 }
 
 const getFetchPromises = (insToken, timeFrame, startTime, endTime) => {
-  if (timeFrame === 'week') {
+  if (timeFrame === "week") {
     return [fetchData(insToken, timeFrame, startTime, endTime)];
   }
   const promises = [];
   let endDate = startTime;
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    startTime = moment(endDate).format('YYYY-MM-DD');
-    endDate = moment(startTime).add(2, 'M').format('YYYY-MM-DD');
+    startTime = moment(endDate).format("YYYY-MM-DD");
+    endDate = moment(startTime).add(2, "M").format("YYYY-MM-DD");
     if (moment(endDate).isAfter(endTime)) {
       promises.push(fetchData(insToken, timeFrame, startTime, endTime));
       break;
     }
     promises.push(fetchData(insToken, timeFrame, startTime, endDate));
-    endDate = moment(endDate).add(1, 'd');
+    endDate = moment(endDate).add(1, "d");
   }
   return promises;
 };
 
-const requestBySplittingTime = (tickName,
+const requestBySplittingTime = (
+  tickName,
   insToken,
   timeFrame,
   startTime,
-  endTime) => new Promise((resolve) => {
+  endTime
+) =>
+  new Promise((resolve) => {
+    const promises = getFetchPromises(insToken, timeFrame, startTime, endTime);
+    Promise.all(promises).then((results) => {
+      let candles = [];
+      results.forEach((result) => {
+        candles = candles.concat(result.data.data.candles);
+      });
 
-  const promises = getFetchPromises(insToken, timeFrame, startTime, endTime);
-  Promise.all(promises).then((results) => {
-    let candles = [];
-    results.forEach((result) => {
-      candles = candles.concat(result.data.data.candles);
+      resolve(candles);
     });
-
-    resolve(candles);
   });
-});
 
 module.exports = {
   fetchData,

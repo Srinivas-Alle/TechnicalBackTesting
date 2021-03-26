@@ -14,6 +14,7 @@
     "csvjson": "^5.1.0",
     "elasticsearch": "^15.0.0",
     "event-stream": "^3.3.4",
+    "fs-extra": "^9.1.0",
     "is-zip-file": "^1.0.2",
     "jshint": "^2.11.1",
     "line-reader": "^0.4.0",
