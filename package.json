@@ -22,7 +22,7 @@
     "lodash": "^4.17.19",
     "moment": "^2.26.0",
     "node-stream-zip": "^1.8.2",
-    "recursive-readdir": "^2.2.2",
+    "recursive-readdir": "^2.2.3",
     "recursive-readdir-sync": "^1.0.6",
     "request": "^2.87.0",
     "request-promise": "^4.2.2",
